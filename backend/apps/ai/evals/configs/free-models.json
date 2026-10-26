@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "generated_at": "2026-10-24T11:06:11.309475+00:00",
+  "bench_artifact": "artifacts\\evals\\model-bench-20261024T110611Z.json",
+  "note": "Provisional pin. The live run could not produce valid scores: the OpenRouter free pools returned upstream 429s ('limit_source: upstream_provider_shared_pool') for every case, and several other free models returned empty content. The pair below responded in earlier single-call probes and is pinned so the evaluation is reproducible; re-run the recheck command when the free pools recover and replace this file with the measured result. A 0.0 rate with runtime_unavailable=true means 'never got a fair turn', not 'failed the task'.",
+  "selection_rule": "measured overall pass rate desc, then p50 latency asc, then error rate asc, then 429 rate asc, then model id asc; models marked unavailable at run time (consecutive 429 congestion) can never be pinned; the eligible pool for the default excludes models with any empty-content reply or any failed JSON case; the fallback prefers a different provider prefix.",
+  "cases_per_category": 1,
+  "provider": "openrouter",
+  "default": "google/gemma-4-26b-a4b-it:free",
+  "fallback": "google/gemma-4-31b-it:free",
+  "status": "unverified-under-load",
+  "recheck_command": "python scripts/ai_model_bench.py run --recheck --out artifacts/evals",
+  "models": {
+    "google/gemma-4-26b-a4b-it:free": {
+      "overall_rate": 0.0,
+      "categories": {
+        "json": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "tools": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "flow": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "refusal": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "injection": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "grounding": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "perf": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        }
+      },
+      "latency_ms_p50": 0.0,
+      "latency_ms_p95": 0.0,
+      "error_rate": 1.0,
+      "rate_limited_count": 3,
+      "unavailable_count": 5,
+      "empty_content_count": 0,
+      "json_valid_rate": null,
+      "runtime_unavailable": true,
+      "status": "runtime_unavailable",
+      "scores_valid": false
+    },
+    "google/gemma-4-31b-it:free": {
+      "overall_rate": 0.0,
+      "categories": {
+        "json": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "tools": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "flow": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "refusal": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "injection": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "grounding": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        },
+        "perf": {
+          "passed": 0,
+          "total": 0,
+          "rate": 0.0
+        }
+      },
+      "latency_ms_p50": 0.0,
+      "latency_ms_p95": 0.0,
+      "error_rate": 1.0,
+      "rate_limited_count": 3,
+      "unavailable_count": 5,
+      "empty_content_count": 0,
+      "json_valid_rate": null,
+      "runtime_unavailable": true,
+      "status": "runtime_unavailable",
+      "scores_valid": false
+    }
+  },
+  "scores_valid": false,
+  "live_evidence": {
+    "successful_probe": {
+      "model": "google/gemma-4-26b-a4b-it:free",
+      "prompt": "Reply with the single word OK.",
+      "observed": "OK.",
+      "provider": "Google AI Studio"
+    },
+    "unavailable_models": {
+      "google/gemma-4-26b-a4b-it:free": "429 upstream_provider_shared_pool in the full run",
+      "google/gemma-4-31b-it:free": "429 upstream_provider_shared_pool in the full run",
+      "xingchen-agi/xing4.0-29b-a4b:free": "429",
+      "nvidia/nemotron-3-super-120b-a12b:free": "404 (model id no longer served)"
+    },
+    "empty_content_models": [
+      "dots-studio/dots-3-note-preview:free",
+      "recursive/flint-v1.0:free",
+      "nvidia/nemotron-3.5-lightning:free",
+      "liquid/lfm-2.5-2.6b:free",
+      "openrouter/free"
+    ],
+    "responsive_without_tools": {
+      "poolside/laguna-s-2.1:free": "200, content, but the catalogue does not advertise tools/structured output"
+    },
+    "recheck": "python scripts/ai_model_bench.py run --recheck --out artifacts/evals"
+  }
+}

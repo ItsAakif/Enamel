@@ -1,0 +1,36 @@
+{"id": "lex-1", "question": "What are the opening hours on Saturday?", "relevant": ["opening-hours"], "category": "lexical"}
+{"id": "lex-2", "question": "Do you accept dental insurance?", "relevant": ["insurance"], "category": "lexical"}
+{"id": "lex-3", "question": "How much is the late cancellation fee?", "relevant": ["cancellation"], "category": "lexical"}
+{"id": "lex-4", "question": "Is there parking at the clinic?", "relevant": ["parking"], "category": "lexical"}
+{"id": "lex-5", "question": "What is the clinic's policy on infection control?", "relevant": ["infection-control"], "category": "lexical"}
+{"id": "lex-6", "question": "How long should I bite on the gauze after an extraction?", "relevant": ["post-op"], "category": "lexical"}
+{"id": "lex-7", "question": "Do you offer interest-free payment plans?", "relevant": ["payment-plans"], "category": "lexical"}
+{"id": "lex-8", "question": "When are same-day emergency slots available?", "relevant": ["emergency"], "category": "lexical"}
+{"id": "par-1", "question": "Till what time are you open on weekdays?", "relevant": ["opening-hours"], "category": "paraphrase"}
+{"id": "par-2", "question": "Can I pay for a big treatment in monthly chunks?", "relevant": ["payment-plans"], "category": "paraphrase"}
+{"id": "par-3", "question": "What happens if I forget my appointment?", "relevant": ["cancellation"], "category": "paraphrase"}
+{"id": "par-4", "question": "Is laughing gas an option for anxious patients?", "relevant": ["sedation"], "category": "paraphrase"}
+{"id": "par-5", "question": "My child is one; when should they first see a dentist?", "relevant": ["pediatric"], "category": "paraphrase"}
+{"id": "par-6", "question": "Will I be able to drive home after being sedated?", "relevant": ["sedation"], "category": "paraphrase"}
+{"id": "par-7", "question": "How do you clean your instruments between patients?", "relevant": ["infection-control"], "category": "paraphrase"}
+{"id": "par-8", "question": "Are the X-rays safe during pregnancy?", "relevant": ["xray-safety"], "category": "paraphrase"}
+{"id": "par-9", "question": "Can I get my teeth straightened without metal braces?", "relevant": ["orthodontics"], "category": "paraphrase"}
+{"id": "par-10", "question": "How long does in-chair bleaching take?", "relevant": ["whitening"], "category": "paraphrase"}
+{"id": "par-11", "question": "Where can I park after six in the evening?", "relevant": ["parking"], "category": "paraphrase"}
+{"id": "par-12", "question": "What should I eat after a tooth is pulled?", "relevant": ["post-op"], "category": "paraphrase"}
+{"id": "par-13", "question": "Can someone else collect my records?", "relevant": ["privacy"], "category": "paraphrase"}
+{"id": "par-14", "question": "What happens at a first appointment?", "relevant": ["new-patient"], "category": "paraphrase"}
+{"id": "multi-1", "question": "I have severe pain and want to spread the cost over months - what are my options?", "relevant": ["emergency", "payment-plans"], "category": "multi-hop"}
+{"id": "multi-2", "question": "Can I cancel late and still use an instalment plan?", "relevant": ["cancellation", "payment-plans"], "category": "multi-hop"}
+{"id": "multi-3", "question": "I am pregnant - can I have X-rays and whitening?", "relevant": ["xray-safety", "whitening"], "category": "multi-hop"}
+{"id": "multi-4", "question": "Where do I park and what time do you close?", "relevant": ["parking", "opening-hours"], "category": "multi-hop"}
+{"id": "multi-5", "question": "My child needs a check-up; do you apply anything to prevent decay?", "relevant": ["pediatric"], "category": "multi-hop"}
+{"id": "multi-6", "question": "I am nervous about sedation: who must come with me and can I drive?", "relevant": ["sedation"], "category": "multi-hop"}
+{"id": "unans-1", "question": "What is the refund policy for cancelled treatment plans?", "relevant": [], "category": "unanswerable"}
+{"id": "unans-2", "question": "How many dentists work at the clinic?", "relevant": [], "category": "unanswerable"}
+{"id": "unans-3", "question": "Do you offer Botox treatments?", "relevant": [], "category": "unanswerable"}
+{"id": "unans-4", "question": "What is the Wi-Fi password?", "relevant": [], "category": "unanswerable"}
+{"id": "unans-5", "question": "What is the price of a root canal?", "relevant": [], "category": "unanswerable"}
+{"id": "unans-6", "question": "Which insurance companies are explicitly excluded?", "relevant": [], "category": "unanswerable"}
+{"id": "unans-7", "question": "Do you have a loyalty programme?", "relevant": [], "category": "unanswerable"}
+{"id": "unans-8", "question": "What is the name of the clinic's chief executive?", "relevant": [], "category": "unanswerable"}

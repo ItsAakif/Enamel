@@ -1,0 +1,3 @@
+{"id": "perf.chat_latency", "case": "chat", "ceiling_ms": 5000}
+{"id": "perf.retrieval_latency", "case": "retrieval", "ceiling_ms": 5000}
+{"id": "perf.answer_latency", "case": "answer", "ceiling_ms": 5000}

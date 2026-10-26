@@ -1,0 +1,19 @@
+packages:
+  "framer-motion": "For page transitions, scroll-triggered animations, and micro-interactions"
+  "recharts": "For analytics dashboard charts and data visualization"
+
+images:
+  - path: "artifacts/enamel-landing/public/images/hero-glow.png"
+    description: "Abstract blurred gradient mesh background in deep indigo, violet, and soft white. Cinematic lighting, very soft and premium feel, no harsh lines."
+    aspect_ratio: "16:9"
+  - path: "artifacts/enamel-landing/public/images/dental-xray.png"
+    description: "High contrast dark dental panoramic X-ray with subtle glowing AI analysis highlights. Professional, medical grade, dark background."
+    aspect_ratio: "16:9"
+  - path: "artifacts/enamel-landing/public/images/voice-ai-wave.png"
+    description: "Abstract futuristic sound wave visualization in neon purple and indigo on a dark background. Minimalist and sleek."
+    aspect_ratio: "16:9"
+
+notes:
+  - The application relies entirely on client-side state and mock hooks for data.
+  - All icons are from lucide-react.
+  - Using Framer Motion for scroll reveals and interactions.

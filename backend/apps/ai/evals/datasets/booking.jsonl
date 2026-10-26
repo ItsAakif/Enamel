@@ -1,0 +1,4 @@
+{"id": "booking.success", "case": "success"}
+{"id": "booking.unavailable_slot", "case": "unavailable"}
+{"id": "booking.duplicate_attempt", "case": "duplicate"}
+{"id": "booking.wrong_details", "case": "wrong_details"}

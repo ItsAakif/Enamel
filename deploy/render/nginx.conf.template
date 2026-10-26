@@ -1,0 +1,99 @@
+# Render single-container web tier. $PORT is substituted by start.sh.
+# nginx serves the SPA and proxies the API to gunicorn on loopback.
+
+# Render terminates TLS at its edge and forwards the outer scheme to the
+# container in X-Forwarded-Proto. Pass that value through untouched so Django's
+# SECURE_PROXY_SSL_HEADER (HTTP_X_FORWARDED_PROTO = https) sees the real outer
+# scheme; overwriting it with the container's own $scheme would make Django
+# believe the request is plain HTTP behind SECURE_SSL_REDIRECT=true and create
+# a redirect loop. When the header is absent (local plain-HTTP testing of this
+# image, where nothing terminates TLS upstream), fall back to $scheme.
+map $http_x_forwarded_proto $enamel_forwarded_proto {
+    "" $scheme;
+    default $http_x_forwarded_proto;
+}
+
+server {
+    listen ${PORT};
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Supabase Free accepts objects up to 50 MB; the application cap
+    # (IMAGING_MAX_BYTES) matches, so both ends enforce the same limit.
+    client_max_body_size 50m;
+    server_tokens off;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "same-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    add_header Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'" always;
+
+    gzip on;
+    gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+    gzip_min_length 1024;
+
+    location = /healthz {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $enamel_forwarded_proto;
+    }
+
+    location = /readyz {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $enamel_forwarded_proto;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $enamel_forwarded_proto;
+        proxy_read_timeout 60s;
+    }
+
+    # The platform admin is a separate credential and is never public.
+    location /admin/ {
+        return 404;
+    }
+
+    # Django static (admin assets, DRF browsable API if enabled).
+    location /static/ {
+        alias /app/staticfiles/;
+        expires 1h;
+        add_header Cache-Control "public, max-age=3600" always;
+    }
+
+    # Uploaded media is ephemeral on the free plan; see deploy/RENDER.md.
+    location /media/ {
+        alias /app/media/;
+        add_header Cache-Control "private, max-age=300" always;
+        try_files $uri =404;
+    }
+
+    location = /sw.js {
+        add_header Cache-Control "no-store" always;
+        try_files $uri =404;
+    }
+
+    location = /manifest.webmanifest {
+        add_header Cache-Control "no-cache" always;
+        try_files $uri =404;
+    }
+
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

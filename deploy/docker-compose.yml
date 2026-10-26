@@ -1,0 +1,297 @@
+name: enamel
+
+# Default profile (no flag): db + redis, used for local development and pytest.
+# Production-shaped stack (migrate, api, worker, beat, web):
+#   docker compose -f deploy/docker-compose.yml --profile prod up -d --build
+#
+# No secret is committed. Values come from deploy/.env (see deploy/.env.example)
+# or the shell environment. Production settings refuse to start without an
+# explicit SECRET_KEY and ALLOWED_HOSTS.
+#
+# The database roles (ADR-013):
+#   enamel_app          the api service - the staff/API runtime
+#   enamel_worker       the worker and beat services
+#   enamel_maint        the platform maintenance commands (the "ops" profile)
+#   enamel_admin        the platform-admin service (the "admin" profile)
+#   enamel              the compose owner: the migrations and the admin
+#
+# The application never migrates: the "migrate" service is the single writer
+# and it connects with the owner URL (DATABASE_MIGRATION_URL). The api, worker
+# and beat services connect with the runtime roles, so the row-level-security
+# policies are in force.
+
+x-backend-environment: &backend-environment
+  DJANGO_SETTINGS_MODULE: config.settings.prod
+  SECRET_KEY: ${SECRET_KEY:-}
+  DEBUG: "false"
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+  # config.settings.prod refuses to start while any of these is empty or still
+  # holds a development placeholder, so they are passed through explicitly.
+  PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-}
+  MESSAGING_WEBHOOK_SECRET: ${MESSAGING_WEBHOOK_SECRET:-}
+  CONNECTOR_KEY: ${CONNECTOR_KEY:-}
+  # The runtime connection. The api service connects as the non-superuser
+  # `enamel_app` role, so PostgreSQL's row-level security is IN FORCE for it:
+  # the policies of ADR-013 (the tenant, principal, capability, catalogue and
+  # platform-row policies) narrow every query. The role holds no BYPASSRLS and
+  # is not a member of the owner or of any bypass holder.
+  DATABASE_URL: ${API_DATABASE_URL:-postgresql://enamel_app:enamel_dev_password@db:5432/enamel}
+  REDIS_URL: redis://redis:6379/0
+  TIME_ZONE: ${TIME_ZONE:-Asia/Kolkata}
+  DEFAULT_CURRENCY: ${DEFAULT_CURRENCY:-INR}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:8080}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8080}
+  # Local demo runs HTTP behind nginx. Set to "true" when TLS terminates in
+  # front of this stack (the health probes stay exempt).
+  SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-false}
+  FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:8080}
+  AI_PROVIDER: ${AI_PROVIDER:-mock}
+  AI_MOCK_MODE: ${AI_MOCK_MODE:-true}
+  MESSAGING_ADAPTER: ${MESSAGING_ADAPTER:-dev}
+  PAYMENT_GATEWAY: ${PAYMENT_GATEWAY:-sandbox}
+  RCM_ENABLED: ${RCM_ENABLED:-false}
+  # The portal one-time code. The production profile never echoes it (the echo
+  # needs DEBUG, which production refuses), so the end-to-end harness cannot
+  # read the code of a synthetic patient from the API response. This file gives
+  # it a second, local source: the dev adapter appends the code there. It holds
+  # contact identifiers and one-time codes, so it stays inside the container
+  # and is never served. Set PORTAL_OTP_LOG_PATH="" to turn it off.
+  PORTAL_OTP_LOG_PATH: ${PORTAL_OTP_LOG_PATH:-/app/logs/portal_otp.log}
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-enamel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-enamel_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-enamel}
+    ports:
+      - "5433:5432"
+    volumes:
+      - enamel_pgdata:/var/lib/postgresql/data
+      # The non-superuser roles (ADR-013). Idempotent; it only runs when the
+      # data volume is created. The roles are created with their attributes
+      # and memberships; the row-level-security policies themselves are
+      # installed by the migration.
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-enamel} -d ${POSTGRES_DB:-enamel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    volumes:
+      - enamel_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  # The single migration writer. It connects with the owner URL
+  # (DATABASE_MIGRATION_URL) - the application role has no DDL rights and
+  # never migrates. It runs to completion and exits; the api service waits
+  # for it, so the ordering is explicit.
+  migrate:
+    profiles: ["prod"]
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+      target: api
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    environment:
+      <<: *backend-environment
+      # The owner credential lives HERE and nowhere else: the runtime services
+      # (api, worker, beat, admin, ops) never receive it, so a code-execution
+      # foothold in a runtime container cannot escalate to the owner (ADR-013).
+      DATABASE_MIGRATION_URL: postgresql://${POSTGRES_USER:-enamel}:${POSTGRES_PASSWORD:-enamel_dev_password}@db:5432/${POSTGRES_DB:-enamel}
+      DATABASE_URL: ${DATABASE_MIGRATION_URL:-postgresql://${POSTGRES_USER:-enamel}:${POSTGRES_PASSWORD:-enamel_dev_password}@db:5432/${POSTGRES_DB:-enamel}}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    profiles: ["prod"]
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+      target: api
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --timeout ${GUNICORN_TIMEOUT:-60}
+    environment:
+      <<: *backend-environment
+      # The api never migrates: the "migrate" service is the single writer.
+      RUN_MIGRATIONS: "0"
+    volumes:
+      - enamel_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; req = urllib.request.Request('http://127.0.0.1:8000/healthz', headers={'Host': 'localhost'}); urllib.request.urlopen(req, timeout=3).read()",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  # Celery worker: durable JobRequest rows are the source of truth, Redis is
+  # only the wake-up signal. All five queues are consumed by this one worker;
+  # scale it with `docker compose ... up -d --scale worker=N`.
+  worker:
+    profiles: ["prod"]
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+      target: api
+    command: celery -A config worker -l info -Q default,reminders,ai,ml,sync
+    environment:
+      <<: *backend-environment
+      RUN_MIGRATIONS: "0"
+      # The worker runs as its own role: it inherits the staff policies and the
+      # cross-clinic job access of the `enamel_platform` group.
+      DATABASE_URL: ${WORKER_DATABASE_URL:-postgresql://enamel_worker:enamel_dev_password@db:5432/enamel}
+    volumes:
+      - enamel_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping --timeout 5 | grep -q pong"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # Celery beat: single replica only. The schedule is code-defined in
+  # config/celery.py (CELERY_BEAT_SCHEDULE), never edited in the database.
+  beat:
+    profiles: ["prod"]
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+      target: api
+    command: celery -A config beat -l info
+    environment:
+      <<: *backend-environment
+      RUN_MIGRATIONS: "0"
+      DATABASE_URL: ${WORKER_DATABASE_URL:-postgresql://enamel_worker:enamel_dev_password@db:5432/enamel}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    # The image healthcheck probes the HTTP API, which beat does not serve.
+    # Beat is a scheduler; a running process plus `celery inspect` of the
+    # worker is the health signal for the async tier.
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+
+  # The platform-admin service (ADR-013, decision D-1). It is a separately
+  # permissioned surface: its own compose service, its own credential, its own
+  # port, and it is NOT proxied by the public web service. It serves the
+  # Django admin and nothing else - the clinic-facing API is not reachable on
+  # that port. The ordinary clinic administration inside the api service stays
+  # tenant-scoped exactly as it is today.
+  # The port is bound to the loopback interface: an operator reaches the
+  # platform admin through an SSH tunnel or a VPN, never through the public
+  # web tier.
+  admin:
+    profiles: ["prod", "admin"]
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+      target: api
+    command: gunicorn config.admin_wsgi:application --bind 0.0.0.0:8000 --workers ${ADMIN_WORKERS:-2} --timeout ${ADMIN_TIMEOUT:-60}
+    environment:
+      <<: *backend-environment
+      RUN_MIGRATIONS: "0"
+      # Its own credential. The role is a member of the owner, so the
+      # platform-admin mode switches the connection to owner-level access.
+      DATABASE_URL: ${ADMIN_DATABASE_URL:-postgresql://enamel_admin:enamel_dev_password@db:5432/enamel}
+      PLATFORM_ADMIN_MODE: "1"
+      PLATFORM_ADMIN_ROLE: ${POSTGRES_USER:-enamel}
+    ports:
+      - "127.0.0.1:${ADMIN_PORT:-8091}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # The maintenance path (ADR-013, decision D-2). The platform commands run
+  # under the dedicated `enamel_maint` role - the only non-owner role that
+  # holds the row-level-security bypass - never as the superuser and never as
+  # the runtime role:
+  #   docker compose -f deploy/docker-compose.yml --profile ops run --rm ops audit_verify
+  #   docker compose -f deploy/docker-compose.yml --profile ops run --rm ops seed_demo
+  ops:
+    profiles: ["ops"]
+    build:
+      context: ..
+      dockerfile: deploy/backend.Dockerfile
+      target: api
+    entrypoint: ["python", "manage.py"]
+    command: ["audit_verify"]
+    environment:
+      <<: *backend-environment
+      RUN_MIGRATIONS: "0"
+      DATABASE_URL: ${MAINT_DATABASE_URL:-postgresql://enamel_maint:enamel_dev_password@db:5432/enamel}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    profiles: ["prod"]
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      target: runtime
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    volumes:
+      - enamel_media:/srv/media:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/_health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  enamel_pgdata:
+  enamel_redisdata:
+  enamel_media:

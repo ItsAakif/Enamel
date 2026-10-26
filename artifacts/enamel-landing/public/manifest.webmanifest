@@ -1,0 +1,19 @@
+{
+  "name": "Enamel Patient Portal",
+  "short_name": "Enamel",
+  "description": "Enamel dental practice portal: appointments, records, plans and invoices.",
+  "start_url": "/portal",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f9f6f5",
+  "theme_color": "#4647d3",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

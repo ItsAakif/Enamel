@@ -1,0 +1,86 @@
+name: enamel
+
+# The hosted public demo overlay. Use it WITH the production-shaped base file,
+# never alone:
+#
+#   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.demo.yml \
+#     --profile prod up -d --build
+#
+# What the overlay changes, and nothing else:
+#
+#   api          runs config.settings.demo instead of config.settings.prod, so
+#                the portal request-code response carries the generated
+#                one-time code in an explicitly labelled `demo_code` field and
+#                the demo visitor can sign in without a mail/SMS provider.
+#                Every hardened production control (fail-closed secrets, HSTS,
+#                CSP, secure cookies, the row-level-security roles) stays in
+#                force, because config.settings.demo imports prod unchanged.
+#   worker/beat  keep config.settings.prod: the background tier has no reason
+#                to reveal one-time codes, and prod refuses DEMO_MODE.
+#   web          stops publishing its port on the host; Caddy is the public
+#                entry and proxies to the nginx service over the compose
+#                network.
+#   caddy        terminates TLS for the demo domain (HTTP-01 via Let's
+#                Encrypt) and forwards to `web:80`.
+#
+# WHAT THIS IS NOT: it is not the production profile. Never add this overlay
+# to a deployment that handles real patient data - DEMO_MODE reveals one-time
+# codes in the API response. Secrets still come from deploy/.env exactly as
+# for the base stack (SECRET_KEY, POSTGRES_PASSWORD, the webhook secrets and
+# the connector key are all still REQUIRED by config.settings.prod). The demo
+# domain and contact e-mail come from deploy/.env.demo or the shell
+# environment.
+
+services:
+  api:
+    environment:
+      DEMO_MODE: "true"
+      DJANGO_SETTINGS_MODULE: config.settings.demo
+      # One explicit host: the Caddy-proxied public domain. The loopback
+      # hostnames needed by the container healthcheck are appended by
+      # config.settings.prod itself. Interpolation falls back to the
+      # compose-network name so an unconfigured offline run still boots.
+      ALLOWED_HOSTS: ${DEMO_DOMAIN:-demo-web}
+      # TLS is terminated by Caddy, which forwards X-Forwarded-Proto, so the
+      # HTTPS redirect and the secure cookies are correct end to end. The
+      # variable exists so a demo stack can also run without the caddy service
+      # (a local nginx-only trial); a real demo host keeps the default.
+      SECURE_SSL_REDIRECT: ${DEMO_SECURE_SSL_REDIRECT:-true}
+      CSRF_TRUSTED_ORIGINS: ${DEMO_ORIGINS:-https://${DEMO_DOMAIN:-demo-web}}
+      CORS_ALLOWED_ORIGINS: ${DEMO_ORIGINS:-https://${DEMO_DOMAIN:-demo-web}}
+      FRONTEND_BASE_URL: ${DEMO_FRONTEND_URL:-https://${DEMO_DOMAIN:-demo-web}}
+      # The demo profile already reveals the code in the labelled API field;
+      # keep the in-container log too (it is never served) so the portal
+      # e2e harness can read codes from a demo stack as well.
+      # PORTAL_OTP_LOG_PATH: pass through from the environment/default.
+
+  # The background tier (worker, beat) is deliberately absent from this
+  # overlay: the services are inherited unmodified from the base file and keep
+  # config.settings.prod, which refuses DEMO_MODE - the guarantee that keeps
+  # the production profile fail-closed.
+
+  web:
+    ports: !reset []
+
+  caddy:
+    # TLS terminator for the public demo host.
+    image: caddy:2-alpine
+    profiles: ["prod"]
+    environment:
+      DEMO_DOMAIN: ${DEMO_DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - enamel_caddy_data:/data
+      - enamel_caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  enamel_caddy_data:
+  enamel_caddy_config:

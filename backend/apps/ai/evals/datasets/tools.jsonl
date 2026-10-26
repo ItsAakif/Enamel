@@ -1,0 +1,6 @@
+{"id": "tools.valid.check_availability", "tool": "check_availability", "args": {"appointment_type": "{{type_a_code}}", "date": "{{future_date}}"}, "expect": "ok"}
+{"id": "tools.missing.required_arg", "tool": "check_availability", "args": {"appointment_type": "{{type_a_code}}"}, "expect": "invalid_arguments"}
+{"id": "tools.extra.argument", "tool": "check_availability", "args": {"appointment_type": "{{type_a_code}}", "date": "{{future_date}}", "clinic_id": "{{clinic_a_id}}"}, "expect": "invalid_arguments"}
+{"id": "tools.wrong_type.argument", "tool": "check_availability", "args": {"appointment_type": 12345, "date": "{{future_date}}"}, "expect": "invalid_arguments"}
+{"id": "tools.cross_clinic.provider", "tool": "check_availability", "args": {"appointment_type": "{{type_a_code}}", "date": "{{future_date}}", "provider_id": "{{provider_b_id}}"}, "expect": "not_found"}
+{"id": "tools.unknown.tool", "tool": "delete_everything", "args": {}, "expect": "unknown_tool"}

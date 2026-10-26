@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Enamel AI evaluation report",
+  "type": "object",
+  "required": ["version", "provider", "seed", "generated_at", "suites", "totals"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {"type": "integer", "minimum": 1},
+    "provider": {"type": "string"},
+    "seed": {"type": "integer"},
+    "generated_at": {"type": "string"},
+    "suites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["suite", "total", "passed", "failed", "duration_ms", "cases"],
+        "additionalProperties": false,
+        "properties": {
+          "suite": {"type": "string"},
+          "total": {"type": "integer", "minimum": 0},
+          "passed": {"type": "integer", "minimum": 0},
+          "failed": {"type": "integer", "minimum": 0},
+          "duration_ms": {"type": "integer", "minimum": 0},
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["suite", "case", "status", "reason", "latency_ms", "tokens", "cost_minor"],
+              "additionalProperties": false,
+              "properties": {
+                "suite": {"type": "string"},
+                "case": {"type": "string"},
+                "status": {"type": "string", "enum": ["pass", "fail"]},
+                "reason": {"type": "string"},
+                "latency_ms": {"type": "integer", "minimum": 0},
+                "tokens": {"type": "integer", "minimum": 0},
+                "cost_minor": {"type": "integer", "minimum": 0}
+              }
+            }
+          }
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": ["total", "passed", "failed", "duration_ms"],
+      "additionalProperties": false,
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "passed": {"type": "integer", "minimum": 0},
+        "failed": {"type": "integer", "minimum": 0},
+        "duration_ms": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

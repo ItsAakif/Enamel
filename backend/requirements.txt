@@ -1,0 +1,58 @@
+# Enamel backend direct dependencies. Versions are pinned exactly; verified in
+# the repo virtualenv (Python 3.14) on 2026-10-18. See STACK-VERSIONS.md.
+
+# Runtime
+Django==6.1.2
+djangorestframework==3.18.3
+psycopg[binary]==3.3.6
+dj-database-url==3.1.2
+celery==5.6.3
+redis==8.1.0
+django-cors-headers==4.9.0
+drf-spectacular==0.30.0
+whitenoise==6.12.0
+django-csp==4.0
+gunicorn==26.2.0
+python-dotenv==1.2.4
+pgvector==0.5.1
+pyotp==2.10.0
+cryptography==46.0.3
+# T106: E.164 phone normalization (default region IN) and patient export PDFs.
+phonenumbers==9.0.41
+reportlab==5.0.1
+# T123: AI provider HTTP client and structured-output validation.
+httpx==0.28.1
+pydantic==2.14.1
+# T130: FHIR R4 facade validation (R4B models, pydantic 2 compatible).
+fhir.resources==7.1.0
+# T129/T131: imaging inference and no-show pipelines are imported by Django at
+# startup, so their numeric dependencies are runtime (not dev-only).
+numpy==2.5.4
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+pandas==3.0.6
+# T127: DICOM parsing, de-identification and preview generation.
+pydicom==3.0.2
+pillow==13.0.0
+# Optional S3-compatible media storage (prod STORAGES swap when
+# AWS_STORAGE_BUCKET_NAME is configured; Supabase Storage supports the S3 API).
+# Range-pinned (not the file's usual exact pin) because it is a compatibility
+# constraint, not a verified runtime: the backend is not required unless the
+# bucket env is set.
+django-storages[s3]>=1.14,<2
+boto3>=1.28,<2
+# T129: YAML pipeline configs and fixture report schema checks.
+PyYAML==6.0.3
+jsonschema==4.26.0
+# Celery queue declarations in config/celery.py.
+kombu==5.6.2
+
+# Test, lint and seed tooling (installed in the image so CI and containers match)
+pytest==9.1.1
+pytest-django==4.14.0
+pytest-socket==0.8.1
+factory-boy==3.3.3
+freezegun==1.5.5
+ruff==0.17.1
+respx==0.23.1

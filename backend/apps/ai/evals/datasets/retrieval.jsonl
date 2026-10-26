@@ -1,0 +1,3 @@
+{"id": "retrieval.opening_hours", "query": "What are the clinic opening hours?", "expected_title": "Opening Hours"}
+{"id": "retrieval.insurance", "query": "Which insurance plans do you accept?", "expected_title": "Insurance Policy"}
+{"id": "retrieval.emergency", "query": "How do I get emergency dental care?", "expected_title": "Emergency Care"}

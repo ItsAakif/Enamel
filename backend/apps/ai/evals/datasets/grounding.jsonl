@@ -1,0 +1,2 @@
+{"id": "grounding.grounded_answer", "query": "What are the clinic opening hours?", "expect": "grounded"}
+{"id": "grounding.below_threshold_refusal", "query": "What is the airspeed velocity of an unladen swallow?", "expect": "refused", "min_score": 1.5}

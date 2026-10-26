@@ -1,0 +1,21 @@
+# Local demo overlay (no TLS).
+#
+# Runs the API with the demo settings so the patient-portal one-time code is
+# shown in the response and in the portal UI, while keeping the ordinary local
+# stack (nginx on http://localhost:8090, the platform admin on its own loopback
+# port). This is the overlay to use when you want to click through the any of
+# the demo flows on your own machine.
+#
+#   docker compose -f deploy/docker-compose.yml \
+#                  -f deploy/docker-compose.demo-local.yml up -d --build
+#
+# For a public host use deploy/docker-compose.demo.yml instead: it terminates
+# TLS with Caddy and does not publish the web port directly. DEMO_MODE reveals
+# one-time codes, so it must never be enabled on a deployment that handles real
+# patient data.
+
+services:
+  api:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.demo
+      DEMO_MODE: "true"

@@ -1,0 +1,14 @@
+# Optional AI evaluation extras.
+#
+# Not installed in the production image: onnxruntime and the sentence models
+# add hundreds of megabytes and the shipped defaults use the deterministic mock
+# provider. Install this file only where you want real local embeddings or the
+# cross-encoder reranker:
+#
+#   pip install -r requirements-ai.txt
+#
+# The models are downloaded on first use:
+#   BAAI/bge-small-en-v1.5              (384d embeddings)
+#   Xenova/ms-marco-MiniLM-L-6-v2       (cross-encoder reranker)
+-r requirements.txt
+fastembed>=0.7

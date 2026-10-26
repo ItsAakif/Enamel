@@ -1,0 +1,72 @@
+# Nightly database backup (free split platform).
+#
+# Supabase Free has no automatic backups. This workflow takes a nightly
+# `pg_dump` (custom format) of the Supabase database through the owner
+# session-pooler URL stored in repository secret `SUPABASE_DB_URL`, writes a
+# SHA-256 sidecar, and uploads both as a 7-day-retention artifact.
+#
+# IMPORTANT: a GitHub Actions artifact on a **public** repository is publicly
+# downloadable. That is only acceptable while the database holds synthetic
+# demo data (`seed_demo` fixtures). For real data, upload the dump to a
+# private Supabase Storage bucket (or another private object store) instead
+# and remove the artifact upload. See docs/deployment/DEPLOYMENT_GUIDE.md.
+#
+# The URL is never echoed or expanded by the host shell: it is passed as an
+# environment variable into the container, where pg_dump reads it directly
+# (and even if it leaked into a log line, GitHub masks repository secrets
+# automatically).
+
+name: Nightly backup
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: backup-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Require the backup secret
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::secrets.SUPABASE_DB_URL is not set - NO BACKUP WAS TAKEN. Add the Supabase owner session-pooler URL (postgresql://postgres.<ref>:<password>@<pooler-host>:5432/postgres?sslmode=require) as a repository secret."
+            exit 1
+          fi
+
+      - name: pg_dump from the postgres:17 container
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          mkdir -p backups
+          STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+          docker run --rm \
+            -v "$PWD/backups:/backups" \
+            -e SUPABASE_DB_URL \
+            -e STAMP \
+            postgres:17 \
+            sh -c 'pg_dump "$SUPABASE_DB_URL" --format=custom --file="/backups/enamel-$STAMP.dump"'
+          # Keep only the checksum on the runner side, never URL-shaped text.
+          sha256sum "backups/enamel-$STAMP.dump" > "backups/enamel-$STAMP.sha256"
+          echo "ENAMEL_DUMP=backups/enamel-$STAMP.dump" >> "$GITHUB_ENV"
+
+      - name: Upload the dump artifact (7-day retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: enamel-database-backup
+          path: |
+            backups/*.dump
+            backups/*.sha256
+          retention-days: 7
+          if-no-files-found: error

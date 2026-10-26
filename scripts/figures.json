@@ -1,0 +1,17 @@
+{
+  "_comment": [
+    "The figures the shipped and planning documents must agree with (C-5).",
+    "The number of boundary proofs is NOT here: it lives next to the proofs in",
+    "backend/apps/core/tests/rls_proof_floor.py and the gate reads it there.",
+    "The number of documentation assertions is the guard's own count.",
+    "Update a figure here and in the documents that quote it, in one pass."
+  ],
+  "backend_tests": 1358,
+  "smoke_checks": 20,
+  "e2e_tests": 30,
+  "vitest_tests": 14,
+  "prod_security_tests": 20,
+  "error_contract_tests": 14,
+  "focused_tests": 354,
+  "reference_tests": 295
+}

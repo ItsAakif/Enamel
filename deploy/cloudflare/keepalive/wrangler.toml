@@ -1,0 +1,20 @@
+# Cloudflare keepalive Worker configuration.
+#
+# 1. Fill in the public Render hostname below (the only value you must edit).
+# 2. Deploy from this directory:  wrangler deploy
+# 3. Confirm the cron trigger exists (Cloudflare dashboard -> Workers ->
+#    enamel-keepalive -> Triggers: every 10 minutes) and the logs show
+#    "answered HTTP 200".
+#
+# The variable is a placeholder; there are no account identifiers here.
+
+name = "enamel-keepalive"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# The public readiness endpoint of the Render demo web service.
+KEEPALIVE_URL = "https://<service>.onrender.com/readyz"
+
+[triggers]
+crons = ["*/10 * * * *"]

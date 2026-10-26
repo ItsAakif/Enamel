@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Abstract illustration of a dental radiograph">
+  <!--
+    Original project artwork (synthetic, stylised, no third-party imagery).
+    An abstract, dark radiograph-style illustration for the landing page.
+    It is NOT a real or generated patient image.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#070810"/>
+      <stop offset="0.55" stop-color="#0b0d18"/>
+      <stop offset="1" stop-color="#05060c"/>
+    </linearGradient>
+    <radialGradient id="glowTop" cx="0.5" cy="0.12" r="0.75">
+      <stop offset="0" stop-color="#4647d3" stop-opacity="0.22"/>
+      <stop offset="0.6" stop-color="#4647d3" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowRight" cx="0.85" cy="0.75" r="0.6">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="tooth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8eaf6" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#aab0d0" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="highlightRing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#4647d3"/>
+    </linearGradient>
+    <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="softer" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect width="1200" height="675" fill="url(#glowTop)"/>
+  <rect width="1200" height="675" fill="url(#glowRight)"/>
+
+  <!-- faint x-ray beam sweeps -->
+  <g stroke="#ffffff" stroke-opacity="0.05" stroke-width="1.5" filter="url(#soft)">
+    <line x1="180" y1="0" x2="120" y2="675"/>
+    <line x1="420" y1="0" x2="400" y2="675"/>
+    <line x1="640" y1="0" x2="660" y2="675"/>
+    <line x1="880" y1="0" x2="940" y2="675"/>
+    <line x1="1080" y1="0" x2="1160" y2="675"/>
+  </g>
+
+  <!-- upper jaw arch -->
+  <g fill="none" stroke="#9aa2c8" stroke-opacity="0.35" stroke-width="2">
+    <path d="M240 118 C 420 52, 780 52, 960 118"/>
+  </g>
+  <!-- lower jaw arch -->
+  <g fill="none" stroke="#9aa2c8" stroke-opacity="0.30" stroke-width="2">
+    <path d="M260 542 C 430 606, 770 606, 940 542"/>
+  </g>
+
+  <!-- upper teeth: stylised crowns, mirrored pairs -->
+  <g fill="url(#tooth)" stroke="#6f77a6" stroke-opacity="0.4" stroke-width="1">
+    <path d="M258 128 c 14 -26, 52 -26, 64 2 c 8 22, 2 52, -14 78 c -6 10, -22 10, -28 0 c -14 -26, -30 -56, -22 -80 z"/>
+    <path d="M352 104 c 14 -22, 48 -22, 60 0 c 8 20, 2 54, -14 82 c -6 10, -22 10, -28 0 c -14 -28, -26 -58, -18 -82 z"/>
+    <path d="M452 90 c 14 -20, 46 -20, 58 0 c 8 20, 2 56, -16 86 c -6 10, -22 10, -28 0 c -14 -30, -22 -62, -14 -86 z"/>
+    <path d="M556 82 c 14 -18, 46 -18, 58 0 c 8 20, 2 58, -16 88 c -6 10, -22 10, -28 0 c -14 -30, -22 -64, -14 -88 z"/>
+    <path d="M672 82 c 14 -18, 46 -18, 58 0 c 8 20, 2 58, -16 88 c -6 10, -22 10, -28 0 c -14 -30, -22 -64, -14 -88 z"/>
+    <path d="M776 90 c 14 -20, 46 -20, 58 0 c 8 20, 2 56, -16 86 c -6 10, -22 10, -28 0 c -14 -30, -22 -62, -14 -86 z"/>
+    <path d="M876 104 c 14 -22, 48 -22, 60 0 c 8 20, 2 54, -14 82 c -6 10, -22 10, -28 0 c -14 -28, -26 -58, -18 -82 z"/>
+    <path d="M966 128 c 14 -26, 52 -26, 64 2 c 8 22, 2 52, -14 78 c -6 10, -22 10, -28 0 c -14 -26, -30 -56, -22 -80 z"/>
+  </g>
+
+  <!-- lower teeth: stylised crowns -->
+  <g fill="url(#tooth)" stroke="#6f77a6" stroke-opacity="0.4" stroke-width="1">
+    <path d="M292 536 c 12 -24, 48 -24, 58 0 c 8 20, 0 30, -14 50 c -6 10, -20 10, -26 0 c -12 -20, -26 -30, -18 -50 z"/>
+    <path d="M386 556 c 12 -22, 46 -22, 56 0 c 8 18, 0 30, -14 48 c -6 10, -20 10, -26 0 c -12 -18, -24 -28, -16 -48 z"/>
+    <path d="M486 572 c 12 -20, 44 -20, 54 0 c 8 16, 0 30, -14 46 c -6 10, -20 10, -26 0 c -12 -16, -22 -28, -14 -46 z"/>
+    <path d="M592 580 c 12 -20, 44 -20, 54 0 c 8 16, 0 30, -14 46 c -6 10, -20 10, -26 0 c -12 -16, -22 -28, -14 -46 z"/>
+    <path d="M700 572 c 12 -20, 44 -20, 54 0 c 8 16, 0 30, -14 46 c -6 10, -20 10, -26 0 c -12 -16, -22 -28, -14 -46 z"/>
+    <path d="M802 556 c 12 -22, 46 -22, 56 0 c 8 18, 0 30, -14 48 c -6 10, -20 10, -26 0 c -12 -18, -24 -28, -16 -48 z"/>
+    <path d="M896 536 c 12 -24, 48 -24, 58 0 c 8 20, 0 30, -14 50 c -6 10, -20 10, -26 0 c -12 -20, -26 -30, -18 -50 z"/>
+  </g>
+
+  <!-- two high-density molar regions: the abstract "advisory review" highlights -->
+  <g>
+    <ellipse cx="500" cy="150" rx="64" ry="52" fill="none" stroke="url(#highlightRing)" stroke-opacity="0.85" stroke-width="3" filter="url(#soft)"/>
+    <ellipse cx="500" cy="150" rx="64" ry="52" fill="#8b5cf6" fill-opacity="0.10" filter="url(#softer)"/>
+    <ellipse cx="760" cy="596" rx="58" ry="46" fill="none" stroke="url(#highlightRing)" stroke-opacity="0.7" stroke-width="3" filter="url(#soft)"/>
+    <ellipse cx="760" cy="596" rx="58" ry="46" fill="#8b5cf6" fill-opacity="0.08" filter="url(#softer)"/>
+  </g>
+
+  <!-- scan line -->
+  <g>
+    <rect x="0" y="300" width="1200" height="2" fill="#8b5cf6" fill-opacity="0.35" filter="url(#soft)"/>
+    <rect x="0" y="299" width="1200" height="4" fill="#8b5cf6" fill-opacity="0.10"/>
+  </g>
+
+  <!-- vignette -->
+  <rect width="1200" height="675" fill="none" stroke="#000000" stroke-opacity="0.5" stroke-width="90" filter="url(#softer)"/>
+</svg>

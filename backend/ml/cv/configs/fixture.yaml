@@ -1,0 +1,37 @@
+# CV pipeline config (T129).
+#
+# This file is the contract for preprocessing and inference. The loaded config is
+# recorded verbatim on every inference job (`InferenceJob.config_json`) and hashed
+# into the output hash, so a result can always be traced back to the exact
+# constants that produced it.
+#
+# The model is a transparent intensity/threshold baseline. It is not a trained
+# network and it makes no clinical claim.
+
+model:
+  name: baseline-intensity-threshold
+  version: "1.0.0"
+
+preprocess:
+  # Fixed resize target (height, width) in pixels.
+  resize: [64, 64]
+  # Fixed normalisation applied after the resize.
+  normalization:
+    mean: 0.5
+    std: 0.25
+  dtype: float32
+
+inference:
+  # Threshold on the normalised grid; pixels above it form candidate regions.
+  threshold: 0.5
+  # Regions smaller than this many pixels are discarded.
+  min_area_px: 4
+  # Regions whose mapped confidence is below this are discarded.
+  min_confidence: 0.5
+  # Label reported on every advisory finding.
+  label: radiopacity
+
+evaluation:
+  target_label: radiopacity
+  calibration_bins: 5
+  decision_threshold: 0.5

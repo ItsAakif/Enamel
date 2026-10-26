@@ -1,0 +1,112 @@
+{
+  "generator": "ml/cv/fixtures.py",
+  "hash": "f6cfbab83cafcccd7f9ed9627ef1c68e348d7ac956cdb32e049a0884afa6052e",
+  "image_size": 48,
+  "items": [
+    {
+      "findings": [],
+      "image": "img_000.png",
+      "label": 0
+    },
+    {
+      "findings": [
+        {
+          "bbox": null,
+          "label": "radiopacity"
+        }
+      ],
+      "image": "img_001.png",
+      "label": 1
+    },
+    {
+      "findings": [
+        {
+          "bbox": null,
+          "label": "radiopacity"
+        }
+      ],
+      "image": "img_002.png",
+      "label": 1
+    },
+    {
+      "findings": [],
+      "image": "img_003.png",
+      "label": 0
+    },
+    {
+      "findings": [
+        {
+          "bbox": null,
+          "label": "radiopacity"
+        }
+      ],
+      "image": "img_004.png",
+      "label": 1
+    },
+    {
+      "findings": [
+        {
+          "bbox": null,
+          "label": "radiopacity"
+        }
+      ],
+      "image": "img_005.png",
+      "label": 1
+    },
+    {
+      "findings": [],
+      "image": "img_006.png",
+      "label": 0
+    },
+    {
+      "findings": [
+        {
+          "bbox": null,
+          "label": "radiopacity"
+        }
+      ],
+      "image": "img_007.png",
+      "label": 1
+    },
+    {
+      "findings": [
+        {
+          "bbox": null,
+          "label": "radiopacity"
+        }
+      ],
+      "image": "img_008.png",
+      "label": 1
+    },
+    {
+      "findings": [],
+      "image": "img_009.png",
+      "label": 0
+    },
+    {
+      "findings": [
+        {
+          "bbox": null,
+          "label": "radiopacity"
+        }
+      ],
+      "image": "img_010.png",
+      "label": 1
+    },
+    {
+      "findings": [
+        {
+          "bbox": null,
+          "label": "radiopacity"
+        }
+      ],
+      "image": "img_011.png",
+      "label": 1
+    }
+  ],
+  "licence": "Project-internal synthetic fixture data; contains no patient data.",
+  "name": "enamel-cv-fixture",
+  "seed": 7,
+  "target_label": "radiopacity",
+  "version": "1.0.0"
+}

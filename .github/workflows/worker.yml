@@ -1,0 +1,74 @@
+# Bounded demo worker window (free split platform).
+#
+# Render's free plan has no worker service and the web tier is sized at
+# 512 MB, so the Celery worker + Beat must run somewhere else: this scheduled
+# GitHub Actions job. It is NOT a continuous scheduler — it opens a bounded
+# window (4 hours/day by default) once a day, drains the queues, and exits.
+# Jobs enqueued outside the window wait in the Redis broker / durable
+# Postgres JobRequest rows until the next window; Beat does not backfill
+# missed schedules. If continuous scheduling is required, use a real worker
+# service.
+#
+# The database URL comes from secret `WORKER_DATABASE_URL` (the
+# `enamel_worker` session-pooler URL) so the web tier, workflows and logs
+# never reference a different credential. No owner/migration credential is
+# ever used or stored here.
+
+name: Worker window
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    # Daily at 06:00 UTC. Adjust after measuring Upstash command usage; see
+    # docs/deployment/DEPLOYMENT_GUIDE.md.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: worker-${{ github.repository }}
+  cancel-in-progress: false
+
+# Approximately 14,400 Upstash commands/day at this window (a 4-hour window,
+# bounded by the job's timeout-minutes) - inside the 500 K/month free
+# allowance. Shorten the job timeout if the first real run projects more.
+
+jobs:
+  worker-beat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+
+      - name: Run the bounded worker + Beat window
+        working-directory: backend
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.demo
+          DEMO_MODE: "true"
+          ALLOWED_HOSTS: localhost
+          DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          PAYMENT_WEBHOOK_SECRET: ${{ secrets.PAYMENT_WEBHOOK_SECRET }}
+          MESSAGING_WEBHOOK_SECRET: ${{ secrets.MESSAGING_WEBHOOK_SECRET }}
+          CONNECTOR_KEY: ${{ secrets.CONNECTOR_KEY }}
+          # The demo AI adapters are deterministic and offline; no provider
+          # key is configured here.
+          AI_PROVIDER: mock
+          AI_MOCK_MODE: "true"
+          AI_EMBEDDING_PROVIDER: mock
+          # Never record one-time codes at rest on a hosted stack.
+          PORTAL_OTP_LOG_PATH: ""
+        run: |
+          celery -A config worker -B -l info \
+            -Q default,reminders,ai,ml,sync \
+            --pool=solo --concurrency=1 --max-tasks-per-child=50
