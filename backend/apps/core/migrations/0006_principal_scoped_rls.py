@@ -688,7 +688,12 @@ def _quote(value: str) -> str:
     return '"' + str(value).replace('"', '""') + '"'
 
 
-ROLE_DDL = """
+#: The role creation block. Every role is created with the same hardened
+#: attributes - NOSUPERUSER, NOBYPASSRLS, NOCREATEDB, NOCREATEROLE - and the
+#: LOGIN/NOLOGIN split of ``LOGIN_ROLES`` / ``NOLOGIN_ROLES`` (only the staff
+#: runtime, the worker and the maintenance role may connect). The memberships
+#: run unconditionally behind the block: they need no superuser.
+ROLE_CREATE_DDL = """
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'enamel_app') THEN
@@ -712,15 +717,6 @@ BEGIN
 END
 $$;
 
--- The attributes are re-asserted on every run so an existing role can never
--- drift back to a superuser or to BYPASSRLS.
-ALTER ROLE enamel_app LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-ALTER ROLE enamel_worker LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-ALTER ROLE enamel_platform NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-ALTER ROLE enamel_portal NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-ALTER ROLE enamel_portal_auth NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-ALTER ROLE enamel_maint LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-
 -- Memberships. The application role may narrow itself to the patient-scoped
 -- portal role (it may never widen itself: it is not a member of the
 -- maintenance role and holds no bypass of any kind). The worker inherits the
@@ -729,6 +725,24 @@ GRANT enamel_app TO enamel_worker;
 GRANT enamel_platform TO enamel_worker;
 GRANT enamel_portal TO enamel_app;
 GRANT enamel_portal_auth TO enamel_app;
+"""
+
+#: The ``ALTER ROLE`` re-assertion. Its purpose is unchanged: re-assert the
+#: attributes on every run so an existing role can never drift back to a
+#: privileged attribute. It can only run when the connecting owner is a
+#: superuser (as in local Compose). On Supabase the owner is CREATEROLE but
+#: not superuser, and PostgreSQL denies these superuser-only statements
+#: ("permission denied to alter role") even though every target role is
+#: NOSUPERUSER - so there the re-assertion is skipped and
+#: ``_verify_role_attributes`` checks the catalog instead (fail closed). The
+#: creation block above still hardens the roles either way.
+ROLE_ALTER_DDL = """
+ALTER ROLE enamel_app LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+ALTER ROLE enamel_worker LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+ALTER ROLE enamel_platform NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+ALTER ROLE enamel_portal NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+ALTER ROLE enamel_portal_auth NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+ALTER ROLE enamel_maint LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
 """
 
 GRANT_DDL = """
@@ -895,8 +909,91 @@ def _table_policies(table: str) -> tuple[PolicySpec, ...]:
     return tuple(policies)
 
 
+#: Every role this migration creates.
+ALL_ROLES: tuple[str, ...] = LOGIN_ROLES + NOLOGIN_ROLES
+
+#: The LOGIN attribute every role is expected to carry: the staff runtime, the
+#: worker and the maintenance role connect; the platform group and the two
+#: portal roles never do.
+EXPECTED_LOGIN: dict[str, bool] = {
+    **{role: True for role in LOGIN_ROLES},
+    **{role: False for role in NOLOGIN_ROLES},
+}
+
+
+def _verify_role_attributes(cursor) -> None:
+    """Fail closed: no enamel role may carry a privileged attribute.
+
+    This runs when the connecting owner is not a superuser and the
+    superuser-only ``ALTER ROLE`` re-assertion cannot run (the Supabase
+    path). The roles were created hardened by ``ROLE_CREATE_DDL`` above, but
+    an already-existing role could have drifted (or been reshaped by hand), so
+    the catalog is verified instead of trusted: any role carrying SUPERUSER,
+    BYPASSRLS, CREATEDB or CREATEROLE - or holding the wrong LOGIN attribute -
+    aborts the migration rather than being accepted silently.
+    """
+
+    problems: list[str] = []
+    for role in ALL_ROLES:
+        cursor.execute(
+            """
+            SELECT rolsuper, rolbypassrls, rolcreatedb, rolcreaterole, rolcanlogin
+              FROM pg_roles
+             WHERE rolname = %s
+            """,
+            [role],
+        )
+        row = cursor.fetchone()
+        if row is None:
+            problems.append(f"{role}: role does not exist")
+            continue
+        rolsuper, rolbypassrls, rolcreatedb, rolcreaterole, rolcanlogin = row
+        for flag, value in (
+            ("SUPERUSER", rolsuper),
+            ("BYPASSRLS", rolbypassrls),
+            ("CREATEDB", rolcreatedb),
+            ("CREATEROLE", rolcreaterole),
+        ):
+            if value:
+                problems.append(f"{role}: carries {flag}")
+        if bool(rolcanlogin) != EXPECTED_LOGIN[role]:
+            problems.append(
+                f"{role}: LOGIN={bool(rolcanlogin)} but expected "
+                f"LOGIN={EXPECTED_LOGIN[role]}"
+            )
+    if problems:
+        raise RuntimeError(
+            "0006 fail-closed role verification failed - the roles must be "
+            "NOSUPERUSER/NOBYPASSRLS/NOCREATEDB/NOCREATEROLE with the expected "
+            "LOGIN attributes:\n  " + "\n  ".join(problems)
+        )
+
+
 def _create_roles(cursor) -> None:
-    cursor.execute(ROLE_DDL)
+    """Create the enamel roles, then re-assert or verify their attributes.
+
+    Two paths, decided by the connecting owner:
+
+    * Superuser (local Compose): the ``ALTER ROLE`` re-assertion runs exactly
+      as it always has, so an existing role can never drift back to a
+      privileged attribute.
+    * Non-superuser (Supabase): PostgreSQL denies the superuser-only
+      ``ALTER ROLE`` statements even for a no-op re-assertion of a
+      NOSUPERUSER role, so the re-assertion is skipped and
+      ``_verify_role_attributes`` checks the catalog in its place - and fails
+      closed on the least drift.
+    """
+
+    cursor.execute(ROLE_CREATE_DDL)
+
+    cursor.execute("SELECT rolsuper FROM pg_roles WHERE rolname = current_user")
+    is_superuser = bool(cursor.fetchone()[0])
+
+    if is_superuser:
+        cursor.execute(ROLE_ALTER_DDL)
+    else:
+        _verify_role_attributes(cursor)
+
     cursor.execute(GRANT_DDL)
     cursor.execute(PORTAL_GRANT_DDL)
 
