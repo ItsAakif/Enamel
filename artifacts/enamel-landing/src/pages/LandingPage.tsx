@@ -1,6 +1,5 @@
 import ResizableNavbar from "@/components/ResizableNavbar";
 import Hero from "@/components/landing/Hero";
-import SocialProof from "@/components/landing/SocialProof";
 import Transformation from "@/components/landing/Transformation";
 import VoiceAI from "@/components/landing/VoiceAI";
 import ImagingReview from "@/components/landing/ImagingReview";
@@ -17,7 +16,6 @@ export default function LandingPage() {
       <ResizableNavbar />
 
       <Hero />
-      <SocialProof />
       <Transformation />
       <VoiceAI />
       <ImagingReview />
