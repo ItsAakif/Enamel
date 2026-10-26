@@ -50,15 +50,15 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
-      # Set your exact service hostname and origin: onrender.com subdomains
-      # are not interchangeable, so a wildcard is deliberately not accepted.
-      # Example values: "https://enamel-demo.onrender.com" for the origin and
-      # "enamel-demo.onrender.com" for the host (Render assigns the actual
-      # name at blueprint apply; adjust before the first deploy).
+      # Exact deployed hostname and origin. Keep the onrender.com host for
+      # Render health checks and direct access; the custom domain is the
+      # public browser origin. No wildcard is accepted.
       - key: ALLOWED_HOSTS
-        sync: false
+        value: enamel-demo-nj6w.onrender.com,enamel.aakifmudel.xyz,localhost,127.0.0.1
       - key: CSRF_TRUSTED_ORIGINS
-        sync: false
+        value: https://enamel-demo-nj6w.onrender.com,https://enamel.aakifmudel.xyz
+      - key: FRONTEND_BASE_URL
+        value: https://enamel.aakifmudel.xyz
       # Enforce HTTPS in Django (prod settings exempt /healthz and /readyz
       # from the redirect so the container's own probes stay on plain HTTP;
       # the nginx template passes through Render's X-Forwarded-Proto).

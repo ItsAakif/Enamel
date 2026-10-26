@@ -147,7 +147,7 @@ pnpm exec playwright test
 
 The production-shaped Compose stack is described in the deployment guide;
 operator-only smoke helpers stay private. Machine-learning, retrieval and
-evaluation commands are in [`docs/AI-EVALUATION.md`](docs/AI-EVALUATION.md).
+evaluation scripts live under the backend's `scripts/` directory.
 
 ## Deployment
 
@@ -157,29 +157,14 @@ covers the local Compose path and the hosted setup. This is a portfolio demo,
 not a production deployment: media is ephemeral unless the optional object-store
 backend is configured, and the background worker runs only in a bounded window.
 
-## AI capabilities and evaluation
+## AI capabilities
 
-The assistant is built around a provider abstraction. The default provider is a
-deterministic mock; OpenRouter is optional and free-model evaluation is
-currently blocked by provider quotas. Tool calls pass through a registry with
-schema validation, permission and identity checks, confirmation nonces and
-tenant-scoped arguments. Retrieval is clinic-scoped before ranking and returns
-cited answers with an explicit refusal path.
-
-Measured on the committed synthetic benchmarks (details and commands in
-[`docs/AI-EVALUATION.md`](docs/AI-EVALUATION.md)):
-
-| Evaluation | Result |
-|---|---|
-| Retrieval, 106 labelled queries, 78 held-out | recall@5 **0.984**, MRR@5 **0.898**, evidence coverage **0.988**, zero cross-tenant hits |
-| Hybrid vs vector | no quality lift on this corpus; reranking improves MRR to 0.938 at ~34× latency, so it is off by default |
-| No-show model, patient-disjoint holdout | ROC-AUC **0.711** vs **0.571** logistic baseline; repeated-split mean **0.687 ± 0.051**; temporal **0.681** |
-| Live chat model | **not claimed** — the free pool was rate-limited; the harness and recheck command are committed |
-
-The imaging pipeline is an explicit intensity/threshold baseline over synthetic
-fixtures, **not a trained diagnostic model**. No clinical performance is claimed.
-The measured claims and their source files are mapped in
-[`docs/AI_ENGINEERING_EVIDENCE.md`](docs/AI_ENGINEERING_EVIDENCE.md).
+The assistant uses a provider abstraction with a deterministic mock by default
+and optional external inference. Tool calls are gated by identity, permission
+and confirmation checks; retrieval is clinic-scoped and returns cited answers
+with an explicit refusal path. The imaging pipeline is an intensity-threshold
+baseline over synthetic fixtures, not a trained diagnostic model. No live-model
+quality score or clinical performance is claimed.
 
 ## Live demo
 
@@ -208,10 +193,8 @@ staff login is `owner@enamel.demo` / `EnamelDemo!2026`; all data is synthetic.
 ## Documentation
 
 - [User guide](docs/USER_GUIDE.md) and [PWA behaviour](docs/PWA.md)
-- [AI evaluation](docs/AI-EVALUATION.md) and [evidence map](docs/AI_ENGINEERING_EVIDENCE.md)
 - [Principal-scoped RLS design](docs/architecture/principal-scoped-rls.md)
-- [Live-model benchmark evidence](docs/evidence/live-model-benchmarks.md) and
-  [asset provenance](docs/evidence/ASSET_PROVENANCE.md)
+- [Asset provenance](docs/evidence/ASSET_PROVENANCE.md)
 - [Deployment guide](docs/deployment/DEPLOYMENT_GUIDE.md)
 - [OpenAPI contract](backend/openapi/schema.json)
 
