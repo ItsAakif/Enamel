@@ -1,13 +1,13 @@
 # Deployment guide — free split platform
 
-Status: **implemented here; not deployed and not verified live.** The code and
-workflow changes described below are in this tree (`deploy/render/start.sh`
-gates, S3 media backend, the 50 MB caps, `deploy/cloud/supabase_bootstrap.sql`,
-the worker and backup workflows, the keepalive Worker). No provider resource
-has been created, pushed or configured: the provider facts were checked
-against official documentation on **2026-10-25**, and the repository's only
-verified deployment path remains the local/production-shaped Compose stack in
-the `deploy/` directory.
+Status: **reference deployment is live at <https://enamel.aakifmudel.xyz>.**
+The code and workflow changes described below are in this tree
+(`deploy/render/start.sh` gates, S3 media backend, the 50 MB caps,
+`deploy/cloud/supabase_bootstrap.sql`, the worker and backup workflows, the
+keepalive Worker). Provider state is external to this repository and contains
+no credentials. The local production-shaped Compose stack remains the
+reproducible local path. Provider facts were checked against official
+documentation on **2026-10-25**.
 
 > Do not use this deployment with real patient data. It uses synthetic demo
 > data, sandbox integrations and a demo-mode portal code.

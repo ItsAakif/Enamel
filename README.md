@@ -10,6 +10,8 @@ evaluated AI assistant and retrieval layer.
 > integrations, is **not clinically validated**, and must not be used with real
 > patient data.
 
+**Live demo:** [enamel.aakifmudel.xyz](https://enamel.aakifmudel.xyz)
+
 [![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Django 6.1](https://img.shields.io/badge/Django-6.1-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
@@ -149,15 +151,11 @@ evaluation commands are in [`docs/AI-EVALUATION.md`](docs/AI-EVALUATION.md).
 
 ## Deployment
 
-There is **no hosted deployment yet**. The verified local path is the
-production-shaped Compose stack in `deploy/docker-compose.yml`; the
-[deployment guide](docs/deployment/DEPLOYMENT_GUIDE.md) covers both local and
-hosted deployment.
-
-A proposed ₹0/month split deployment (Render, Supabase, Upstash, GitHub
-Actions) is documented in
-[`docs/deployment/DEPLOYMENT_GUIDE.md`](docs/deployment/DEPLOYMENT_GUIDE.md).
-Those are proposals, not live integrations.
+The public demo is live at <https://enamel.aakifmudel.xyz> on the free-tier
+Render/Supabase/Upstash stack. The [deployment guide](docs/deployment/DEPLOYMENT_GUIDE.md)
+covers the local Compose path and the hosted setup. This is a portfolio demo,
+not a production deployment: media is ephemeral unless the optional object-store
+backend is configured, and the background worker runs only in a bounded window.
 
 ## AI capabilities and evaluation
 
@@ -183,13 +181,16 @@ fixtures, **not a trained diagnostic model**. No clinical performance is claimed
 The measured claims and their source files are mapped in
 [`docs/AI_ENGINEERING_EVIDENCE.md`](docs/AI_ENGINEERING_EVIDENCE.md).
 
-## Demo access
+## Live demo
 
-No public demo is deployed. The local demo is available through the quick-start
-instructions above. The patient portal uses a one-time code: the dev adapter
-logs it, and `PORTAL_OTP_ECHO=true` with `DEBUG` can echo it; the demo profile
-adds an explicitly labelled `demo_code` response field. Do not use these flows
-with real patient information.
+[Open the live demo](https://enamel.aakifmudel.xyz). It runs on a free-tier
+Render/Supabase/Upstash stack with synthetic data, sandbox integrations and the
+demo portal code flow. The free web instance sleeps after 15 minutes without
+traffic, so the first load may take about a minute. Do not use it with real
+patient information.
+
+The local demo remains available through the quick-start above. The seeded
+staff login is `owner@enamel.demo` / `EnamelDemo!2026`; all data is synthetic.
 
 ## Security and data
 
